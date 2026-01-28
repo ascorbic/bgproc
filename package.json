@@ -1,6 +1,6 @@
 {
   "name": "bgproc",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "packageManager": "pnpm@9.15.6",
   "description": "Simple process manager for agents",
   "keywords": [
