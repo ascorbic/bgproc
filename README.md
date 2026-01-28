@@ -8,6 +8,8 @@ Manage background processes like dev servers from the command line. Designed to 
 
 ```bash
 npm install -g bgproc
+# or using npx
+npx bgproc start -n myserver -- npm run dev
 ```
 
 ## Usage
