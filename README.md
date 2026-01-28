@@ -99,6 +99,42 @@ bgproc status -n myserver  # equivalent
 
 - `BGPROC_DATA_DIR`: Override data directory (default: `~/.local/share/bgproc`)
 
+## Usage with AI Agents
+
+### Just ask the agent
+
+The simplest approach - just tell your agent to use it:
+
+```
+Use bgproc to start and manage the dev server. Run bgproc --help to see available commands.
+```
+
+### AI Coding Assistants
+
+Add the skill to your AI coding assistant for richer context:
+
+```bash
+npx skills add ascorbic/bgproc
+```
+
+This works with Claude Code, Cursor, Codex, and other AI coding tools.
+
+### AGENTS.md / CLAUDE.md
+
+For more consistent results, add to your project instructions:
+
+```markdown
+## Background Processes
+
+Use `bgproc` to manage dev servers and background processes. All commands output JSON.
+
+Workflow:
+1. `bgproc start -n devserver -- npm run dev` - Start a process
+2. `bgproc status devserver` - Check if running, get port
+3. `bgproc logs devserver` - View output if something's wrong
+4. `bgproc stop devserver` - Stop when done
+```
+
 ## Platform Support
 
 macOS and Linux only. Windows is not supported.
