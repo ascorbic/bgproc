@@ -1,5 +1,5 @@
 import { defineCommand } from "citty";
-import { getProcess, removeProcess, isProcessRunning } from "../registry.js";
+import { getProcess, removeProcess, isProcessRunning, validateName } from "../registry.js";
 
 export const stopCommand = defineCommand({
   meta: {
@@ -20,10 +20,14 @@ export const stopCommand = defineCommand({
   },
   run({ args, rawArgs }) {
     const name = args.name ?? rawArgs[0];
-    if (!name) {
-      console.error("Error: Process name required");
+
+    try {
+      validateName(name);
+    } catch (err) {
+      console.error(`Error: ${(err as Error).message}`);
       process.exit(1);
     }
+
     const entry = getProcess(name);
 
     if (!entry) {

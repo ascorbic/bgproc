@@ -97,6 +97,16 @@ describe("bgproc CLI", () => {
       expect(result.status).toBe(1);
       expect(result.stderr).toContain("No command specified");
     });
+
+    it("rejects invalid process names", () => {
+      const invalid = run("start -n '../evil' -- sleep 60");
+      expect(invalid.status).toBe(1);
+      expect(invalid.stderr).toContain("alphanumeric");
+
+      const spaces = run("start -n 'has spaces' -- sleep 60");
+      expect(spaces.status).toBe(1);
+      expect(spaces.stderr).toContain("alphanumeric");
+    });
   });
 
   describe("status", () => {

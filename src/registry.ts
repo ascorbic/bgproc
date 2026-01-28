@@ -2,6 +2,23 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync, unlinkSync } from "
 import { homedir } from "node:os";
 import { join } from "node:path";
 
+/**
+ * Validate process name to prevent path traversal and code injection
+ */
+export function validateName(name: string): void {
+  if (!name) {
+    throw new Error("Process name required");
+  }
+  if (!/^[a-zA-Z0-9_-]+$/.test(name)) {
+    throw new Error(
+      "Process name must contain only alphanumeric characters, hyphens, and underscores",
+    );
+  }
+  if (name.length > 64) {
+    throw new Error("Process name must be 64 characters or less");
+  }
+}
+
 export interface ProcessEntry {
   pid: number;
   command: string[];

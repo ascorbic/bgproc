@@ -1,7 +1,7 @@
 import { defineCommand } from "citty";
 import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
-import { getProcess, getLogPaths } from "../registry.js";
+import { getProcess, getLogPaths, validateName } from "../registry.js";
 import { readLastLines, readLog } from "../logs.js";
 
 export const logsCommand = defineCommand({
@@ -38,10 +38,14 @@ export const logsCommand = defineCommand({
   },
   run({ args, rawArgs }) {
     const name = args.name ?? rawArgs[0];
-    if (!name) {
-      console.error("Error: Process name required");
+
+    try {
+      validateName(name);
+    } catch (err) {
+      console.error(`Error: ${(err as Error).message}`);
       process.exit(1);
     }
+
     const entry = getProcess(name);
 
     if (!entry) {

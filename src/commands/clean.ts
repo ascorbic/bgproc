@@ -5,6 +5,7 @@ import {
   removeProcess,
   isProcessRunning,
   getLogPaths,
+  validateName,
 } from "../registry.js";
 
 export const cleanCommand = defineCommand({
@@ -38,6 +39,13 @@ export const cleanCommand = defineCommand({
         }
       }
     } else if (name) {
+      try {
+        validateName(name);
+      } catch (err) {
+        console.error(`Error: ${(err as Error).message}`);
+        process.exit(1);
+      }
+
       const entry = registry[name];
 
       if (!entry) {

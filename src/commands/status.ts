@@ -1,5 +1,5 @@
 import { defineCommand } from "citty";
-import { getProcess, isProcessRunning, getLogPaths } from "../registry.js";
+import { getProcess, isProcessRunning, getLogPaths, validateName } from "../registry.js";
 import { detectPorts, detectPortFromLogs } from "../ports.js";
 
 export const statusCommand = defineCommand({
@@ -16,10 +16,14 @@ export const statusCommand = defineCommand({
   },
   run({ args, rawArgs }) {
     const name = args.name ?? rawArgs[0];
-    if (!name) {
-      console.error("Error: Process name required");
+
+    try {
+      validateName(name);
+    } catch (err) {
+      console.error(`Error: ${(err as Error).message}`);
       process.exit(1);
     }
+
     const entry = getProcess(name);
 
     if (!entry) {

@@ -1,7 +1,7 @@
 import { defineCommand } from "citty";
 import { spawn } from "node:child_process";
 import { openSync } from "node:fs";
-import { addProcess, getLogPaths, ensureDataDir } from "../registry.js";
+import { addProcess, getLogPaths, ensureDataDir, validateName } from "../registry.js";
 
 export const startCommand = defineCommand({
   meta: {
@@ -24,6 +24,14 @@ export const startCommand = defineCommand({
   },
   run({ args, rawArgs }) {
     const name = args.name;
+
+    try {
+      validateName(name);
+    } catch (err) {
+      console.error(`Error: ${(err as Error).message}`);
+      process.exit(1);
+    }
+
     const timeout = args.timeout ? parseInt(args.timeout, 10) : undefined;
 
     // Get command from rawArgs after "--"
@@ -109,7 +117,7 @@ function scheduleKill(pid: number, seconds: number, name: string): void {
         try {
           process.kill(${pid}, 0); // check if alive
           process.kill(${pid}, 'SIGTERM');
-          console.error('bgproc: ${name} killed after ${seconds}s timeout');
+          console.error('bgproc: ' + process.env.BGPROC_NAME + ' killed after ${seconds}s timeout');
         } catch {}
         process.exit(0);
       }, ${seconds * 1000});
@@ -118,6 +126,7 @@ function scheduleKill(pid: number, seconds: number, name: string): void {
     {
       detached: true,
       stdio: "ignore",
+      env: { ...process.env, BGPROC_NAME: name },
     },
   );
   killer.unref();
