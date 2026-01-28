@@ -72,12 +72,24 @@ describe("bgproc CLI", () => {
       expect(data.command).toBe("sleep 60");
     });
 
-    it("fails when name already exists", () => {
+    it("fails when name is already running", () => {
       run("start -n duplicate -- sleep 60");
       const result = run("start -n duplicate -- sleep 60");
 
       expect(result.status).toBe(1);
-      expect(result.stderr).toContain("already exists");
+      expect(result.stderr).toContain("already running");
+    });
+
+    it("auto-cleans dead process with same name", async () => {
+      // Start a process that exits immediately
+      run("start -n reuse-test -- node -e 'process.exit(0)'");
+      await new Promise((r) => setTimeout(r, 200));
+
+      // Starting again should succeed (auto-clean)
+      const result = run("start -n reuse-test -- sleep 60");
+      expect(result.status).toBe(0);
+      const data = JSON.parse(result.stdout);
+      expect(data.name).toBe("reuse-test");
     });
 
     it("fails without a command", () => {

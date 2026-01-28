@@ -1,3 +1,4 @@
+import path from "node:path";
 import { defineCommand } from "citty";
 import { readRegistry, isProcessRunning, getLogPaths } from "../registry.js";
 import { detectPorts, detectPortFromLogs } from "../ports.js";
@@ -21,7 +22,7 @@ export const listCommand = defineCommand({
     // citty will set it to "" if flag present with no value
     let cwdFilter: string | undefined;
     if (args.cwd !== undefined) {
-      cwdFilter = args.cwd === "" ? process.cwd() : args.cwd;
+      cwdFilter = args.cwd === "" ? process.cwd() : path.resolve(args.cwd);
     }
 
     const entries = Object.entries(registry)

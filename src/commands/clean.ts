@@ -14,36 +14,30 @@ export const cleanCommand = defineCommand({
   },
   args: {
     name: {
-      type: "positional",
-      description: "Process name (or --all for all dead processes)",
-      required: false,
+      type: "string",
+      alias: "n",
+      description: "Process name",
     },
     all: {
       type: "boolean",
       alias: "a",
       description: "Clean all dead processes",
     },
-    logs: {
-      type: "boolean",
-      alias: "l",
-      description: "Also remove log files",
-      default: true,
-    },
   },
-  run({ args }) {
+  run({ args, rawArgs }) {
     const registry = readRegistry();
     const cleaned: string[] = [];
+    const name = args.name ?? rawArgs[0];
 
     if (args.all) {
       // Clean all dead processes
-      for (const [name, entry] of Object.entries(registry)) {
+      for (const [procName, entry] of Object.entries(registry)) {
         if (!isProcessRunning(entry.pid)) {
-          cleanProcess(name, args.logs !== false);
-          cleaned.push(name);
+          cleanProcess(procName);
+          cleaned.push(procName);
         }
       }
-    } else if (args.name) {
-      const name = args.name;
+    } else if (name) {
       const entry = registry[name];
 
       if (!entry) {
@@ -58,7 +52,7 @@ export const cleanCommand = defineCommand({
         process.exit(1);
       }
 
-      cleanProcess(name, args.logs !== false);
+      cleanProcess(name);
       cleaned.push(name);
     } else {
       console.error("Specify a process name or use --all");
@@ -74,16 +68,14 @@ export const cleanCommand = defineCommand({
   },
 });
 
-function cleanProcess(name: string, removeLogs: boolean): void {
+function cleanProcess(name: string): void {
   removeProcess(name);
 
-  if (removeLogs) {
-    const logPaths = getLogPaths(name);
-    try {
-      if (existsSync(logPaths.stdout)) unlinkSync(logPaths.stdout);
-      if (existsSync(logPaths.stderr)) unlinkSync(logPaths.stderr);
-    } catch {
-      // ignore
-    }
+  const logPaths = getLogPaths(name);
+  try {
+    if (existsSync(logPaths.stdout)) unlinkSync(logPaths.stdout);
+    if (existsSync(logPaths.stderr)) unlinkSync(logPaths.stderr);
+  } catch {
+    // ignore
   }
 }

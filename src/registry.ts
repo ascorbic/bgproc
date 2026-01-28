@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
+import { readFileSync, writeFileSync, mkdirSync, existsSync, unlinkSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 
@@ -55,11 +55,24 @@ export function writeRegistry(registry: Registry): void {
 
 export function addProcess(name: string, entry: ProcessEntry): void {
   const registry = readRegistry();
-  if (registry[name]) {
-    throw new Error(
-      `Process '${name}' already exists. Use 'bgproc clean ${name}' first.`,
-    );
+  const existing = registry[name];
+
+  if (existing) {
+    if (isProcessRunning(existing.pid)) {
+      throw new Error(
+        `Process '${name}' is already running (PID ${existing.pid}). Use 'bgproc stop ${name}' first.`,
+      );
+    }
+    // Dead process - auto-clean old logs before starting fresh
+    const logPaths = getLogPaths(name);
+    try {
+      if (existsSync(logPaths.stdout)) unlinkSync(logPaths.stdout);
+      if (existsSync(logPaths.stderr)) unlinkSync(logPaths.stderr);
+    } catch {
+      // ignore
+    }
   }
+
   registry[name] = entry;
   writeRegistry(registry);
 }

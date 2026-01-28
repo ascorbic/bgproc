@@ -29,6 +29,7 @@ bgproc logs myserver --errors  # stderr only
 # List all processes
 bgproc list
 bgproc list --cwd              # filter to current directory
+bgproc list --cwd /path/to/dir # filter to specific directory
 
 # Stop a process
 bgproc stop myserver
@@ -41,10 +42,12 @@ bgproc clean --all
 
 ## Features
 
+- **JSON output**: All commands output JSON to stdout, errors to stderr
 - **Port detection**: Automatically detects listening ports via `lsof`
-- **JSON output**: All commands return JSON for easy parsing
+- **Duplicate prevention**: Prevent starting multiple processes with the same name
 - **Log management**: Stdout/stderr captured, capped at 1MB
 - **Timeout support**: `--timeout 60` kills after N seconds
+- **Auto-cleanup**: Starting a process with the same name as a dead one auto-cleans it
 - **CWD filtering**: Filter process list by working directory
 
 ## Options
@@ -54,6 +57,15 @@ bgproc clean --all
 ```
 -n, --name     Process name (required)
 -t, --timeout  Kill after N seconds
+```
+
+### `status`, `stop`, `logs`, `clean`
+
+All accept process name as positional arg or `-n`:
+
+```bash
+bgproc status myserver
+bgproc status -n myserver  # equivalent
 ```
 
 ### `logs`

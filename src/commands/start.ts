@@ -6,7 +6,8 @@ import { addProcess, getLogPaths, ensureDataDir } from "../registry.js";
 export const startCommand = defineCommand({
   meta: {
     name: "start",
-    description: "Start a background process",
+    description:
+      "Start a background process\n\nUsage: bgproc start -n <name> [-t <seconds>] -- <command...>",
   },
   args: {
     name: {
@@ -45,7 +46,7 @@ export const startCommand = defineCommand({
     const stderrFd = openSync(logPaths.stderr, "a");
 
     // Spawn detached process
-    const child = spawn(command[0], command.slice(1), {
+    const child = spawn(command[0]!, command.slice(1), {
       cwd,
       detached: true,
       stdio: ["ignore", stdoutFd, stderrFd],

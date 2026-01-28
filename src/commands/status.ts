@@ -5,17 +5,21 @@ import { detectPorts, detectPortFromLogs } from "../ports.js";
 export const statusCommand = defineCommand({
   meta: {
     name: "status",
-    description: "Get status of a background process",
+    description: "Get status of a background process, including pid and open ports",
   },
   args: {
     name: {
-      type: "positional",
+      type: "string",
+      alias: "n",
       description: "Process name",
-      required: true,
     },
   },
-  run({ args }) {
-    const name = args.name;
+  run({ args, rawArgs }) {
+    const name = args.name ?? rawArgs[0];
+    if (!name) {
+      console.error("Error: Process name required");
+      process.exit(1);
+    }
     const entry = getProcess(name);
 
     if (!entry) {

@@ -1,6 +1,6 @@
 {
   "name": "bgproc",
-  "version": "0.1.0",
+  "version": "0.0.0",
   "description": "Simple process manager for agents",
   "keywords": [
     "background",
@@ -47,6 +47,7 @@
     "oxlint": "^1.0.0",
     "oxlint-tsgolint": "^0.11.3",
     "tsdown": "^0.20.1",
+    "typescript": "^5.9.3",
     "vitest": "^4.0.18"
   }
 }
