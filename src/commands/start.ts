@@ -1,14 +1,14 @@
 import { defineCommand } from "citty";
 import { spawn, ChildProcess } from "node:child_process";
 import { openSync } from "node:fs";
-import { addProcess, getLogPaths, ensureDataDir, validateName, isProcessRunning } from "../registry.js";
+import { addProcess, getProcess, removeProcess, getLogPaths, ensureDataDir, validateName, isProcessRunning } from "../registry.js";
 import { detectPorts } from "../ports.js";
 
 export const startCommand = defineCommand({
   meta: {
     name: "start",
     description:
-      "Start a background process\n\nUsage: bgproc start -n <name> [-t <seconds>] [-w [<seconds>]] [--keep] -- <command...>",
+      "Start a background process\n\nUsage: bgproc start -n <name> [-f] [-t <seconds>] [-w [<seconds>]] [--keep] -- <command...>",
   },
   args: {
     name: {
@@ -31,6 +31,11 @@ export const startCommand = defineCommand({
       type: "boolean",
       description: "Keep process running on timeout (only with --wait-for-port)",
     },
+    force: {
+      type: "boolean",
+      alias: "f",
+      description: "Kill existing process with same name before starting",
+    },
   },
   async run({ args, rawArgs }) {
     const name = args.name;
@@ -45,6 +50,19 @@ export const startCommand = defineCommand({
     if (args.keep && args.waitForPort === undefined) {
       console.error("Error: --keep requires --wait-for-port");
       process.exit(1);
+    }
+
+    // If --force, kill any existing process with this name
+    if (args.force) {
+      const existing = getProcess(name);
+      if (existing && isProcessRunning(existing.pid)) {
+        try {
+          process.kill(existing.pid, "SIGTERM");
+        } catch {
+          // ignore - process may have just died
+        }
+        removeProcess(name);
+      }
     }
 
     const timeout = args.timeout ? parseInt(args.timeout, 10) : undefined;

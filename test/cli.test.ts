@@ -321,4 +321,23 @@ describe("bgproc CLI", () => {
       expect(result.stderr).toContain("--keep requires --wait-for-port");
     });
   });
+
+  describe("force", () => {
+    it("kills existing process with --force", () => {
+      const first = run("start -n force-test -- sleep 60");
+      expect(first.status).toBe(0);
+      const firstPid = parseJson(first.stdout).pid;
+
+      const second = run("start -n force-test -f -- sleep 60");
+      expect(second.status).toBe(0);
+      const secondPid = parseJson(second.stdout).pid;
+
+      expect(secondPid).not.toBe(firstPid);
+
+      // Verify new process is running
+      const status = run("status force-test");
+      expect(parseJson(status.stdout).pid).toBe(secondPid);
+      expect(parseJson(status.stdout).running).toBe(true);
+    });
+  });
 });
