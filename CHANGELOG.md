@@ -1,5 +1,11 @@
 # bgproc
 
+## 0.2.1
+
+### Patch Changes
+
+- [#5](https://github.com/ascorbic/bgproc/pull/5) [`5219248`](https://github.com/ascorbic/bgproc/commit/5219248518119496421bcebc8710dfee0d9a2576) Thanks [@ascorbic](https://github.com/ascorbic)! - Sort detected ports numerically so the `port` field returns the lowest port number
+
 ## 0.2.0
 
 ### Minor Changes
