@@ -1,13 +1,14 @@
 import { defineCommand } from "citty";
-import { spawn } from "node:child_process";
+import { spawn, ChildProcess } from "node:child_process";
 import { openSync } from "node:fs";
-import { addProcess, getLogPaths, ensureDataDir, validateName } from "../registry.js";
+import { addProcess, getLogPaths, ensureDataDir, validateName, isProcessRunning } from "../registry.js";
+import { detectPorts } from "../ports.js";
 
 export const startCommand = defineCommand({
   meta: {
     name: "start",
     description:
-      "Start a background process\n\nUsage: bgproc start -n <name> [-t <seconds>] -- <command...>",
+      "Start a background process\n\nUsage: bgproc start -n <name> [-t <seconds>] [-w [<seconds>]] [--keep] -- <command...>",
   },
   args: {
     name: {
@@ -21,14 +22,28 @@ export const startCommand = defineCommand({
       alias: "t",
       description: "Kill after N seconds",
     },
+    waitForPort: {
+      type: "string",
+      alias: "w",
+      description: "Wait for port to be detected (optional: timeout in seconds)",
+    },
+    keep: {
+      type: "boolean",
+      description: "Keep process running on timeout (only with --wait-for-port)",
+    },
   },
-  run({ args, rawArgs }) {
+  async run({ args, rawArgs }) {
     const name = args.name;
 
     try {
       validateName(name);
     } catch (err) {
       console.error(`Error: ${(err as Error).message}`);
+      process.exit(1);
+    }
+
+    if (args.keep && args.waitForPort === undefined) {
+      console.error("Error: --keep requires --wait-for-port");
       process.exit(1);
     }
 
@@ -91,17 +106,103 @@ export const startCommand = defineCommand({
       scheduleKill(child.pid, timeout, name);
     }
 
-    console.log(
-      JSON.stringify({
-        name,
-        pid: child.pid,
-        cwd,
-        command: command.join(" "),
-        ...(timeout && { killAt: entry.killAt }),
-      }),
-    );
+    const baseStatus = {
+      name,
+      pid: child.pid,
+      cwd,
+      command: command.join(" "),
+      ...(timeout && { killAt: entry.killAt }),
+    };
+
+    // If --wait-for-port, wait for port detection before printing final status
+    if (args.waitForPort !== undefined) {
+      const waitTimeout = args.waitForPort ? parseInt(args.waitForPort, 10) : undefined;
+      const killOnTimeout = !args.keep;
+      const result = await waitForPortDetection(child.pid!, logPaths.stdout, waitTimeout, killOnTimeout);
+
+      if (result.error) {
+        console.error(result.error);
+        process.exit(1);
+      }
+
+      console.log(
+        JSON.stringify({
+          ...baseStatus,
+          ports: result.ports,
+          port: result.ports![0],
+        }),
+      );
+    } else {
+      console.log(JSON.stringify(baseStatus));
+    }
   },
 });
+
+interface WaitResult {
+  ports?: number[];
+  error?: string;
+}
+
+/**
+ * Wait for a port to be detected on the process.
+ * Tails logs to stderr while waiting.
+ */
+function waitForPortDetection(
+  pid: number,
+  logPath: string,
+  timeoutSeconds?: number,
+  killOnTimeout?: boolean
+): Promise<WaitResult> {
+  return new Promise((resolve) => {
+    const startTime = Date.now();
+
+    // Tail the log file to stderr so user sees output
+    const tail = spawn("tail", ["-f", logPath], {
+      stdio: ["ignore", "pipe", "ignore"],
+    });
+    tail.stdout?.pipe(process.stderr);
+
+    const cleanup = (tailProcess: ChildProcess, intervalId: NodeJS.Timeout) => {
+      clearInterval(intervalId);
+      tailProcess.kill();
+    };
+
+    const pollInterval = setInterval(() => {
+      // Check if process is still running
+      if (!isProcessRunning(pid)) {
+        cleanup(tail, pollInterval);
+        resolve({ error: `Process ${pid} died before a port was detected` });
+        return;
+      }
+
+      // Check for timeout
+      if (timeoutSeconds !== undefined) {
+        const elapsed = (Date.now() - startTime) / 1000;
+        if (elapsed >= timeoutSeconds) {
+          cleanup(tail, pollInterval);
+          if (killOnTimeout) {
+            try {
+              process.kill(pid, "SIGTERM");
+            } catch {
+              // ignore - process may have just died
+            }
+            resolve({ error: `Timeout: no port detected after ${timeoutSeconds}s (process killed)` });
+          } else {
+            resolve({ error: `Timeout: no port detected after ${timeoutSeconds}s (process still running)` });
+          }
+          return;
+        }
+      }
+
+      // Check for ports
+      const ports = detectPorts(pid);
+      if (ports.length > 0) {
+        cleanup(tail, pollInterval);
+        resolve({ ports });
+      }
+    }, 500);
+  });
+}
 
 /**
  * Fork a small process to kill after timeout

@@ -1,6 +1,7 @@
 import { defineCommand } from "citty";
-import { getProcess, isProcessRunning, getLogPaths, validateName } from "../registry.js";
-import { detectPorts, detectPortFromLogs } from "../ports.js";
+import { getProcess, isProcessRunning, validateName } from "../registry.js";
+import { detectPorts } from "../ports.js";
+import { formatUptime } from "../utils.js";
 
 export const statusCommand = defineCommand({
   meta: {
@@ -32,17 +33,7 @@ export const statusCommand = defineCommand({
     }
 
     const running = isProcessRunning(entry.pid);
-    const logPaths = getLogPaths(name);
-
-    let ports: number[] = [];
-    if (running) {
-      ports = detectPorts(entry.pid);
-      // Fallback to log parsing if lsof didn't find anything
-      if (ports.length === 0) {
-        const logPort = detectPortFromLogs(logPaths.stdout);
-        if (logPort) ports = [logPort];
-      }
-    }
+    const ports = running ? detectPorts(entry.pid) : [];
 
     const uptime = running ? formatUptime(new Date(entry.startedAt)) : null;
 
@@ -62,12 +53,3 @@ export const statusCommand = defineCommand({
     );
   },
 });
-
-function formatUptime(startedAt: Date): string {
-  const seconds = Math.floor((Date.now() - startedAt.getTime()) / 1000);
-  if (seconds < 60) return `${seconds}s`;
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}m${seconds % 60}s`;
-  const hours = Math.floor(seconds / 3600);
-  const mins = Math.floor((seconds % 3600) / 60);
-  return `${hours}h${mins}m`;
-}

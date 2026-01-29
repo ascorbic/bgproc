@@ -282,4 +282,43 @@ describe("bgproc CLI", () => {
       expect(data.port).toBe(19876);
     });
   });
+
+  describe("wait-for-port", () => {
+    it("waits for port and returns JSON with port", () => {
+      const result = run("start -n wait-test -w -- python3 -m http.server 19877");
+      expect(result.status).toBe(0);
+
+      const data = parseJson(result.stdout);
+      expect(data.name).toBe("wait-test");
+      expect(data.port).toBe(19877);
+      expect(data.ports).toContain(19877);
+    });
+
+    it("kills process on timeout by default", async () => {
+      const result = run("start -n timeout-kill -w 1 -- sleep 60");
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain("process killed");
+
+      // Verify process is dead
+      await new Promise((r) => setTimeout(r, 100));
+      const status = run("status timeout-kill");
+      expect(parseJson(status.stdout).running).toBe(false);
+    });
+
+    it("keeps process running on timeout with --keep", async () => {
+      const result = run("start -n timeout-keep -w 1 --keep -- sleep 60");
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain("still running");
+
+      // Verify process is still alive
+      const status = run("status timeout-keep");
+      expect(parseJson(status.stdout).running).toBe(true);
+    });
+
+    it("errors when --keep used without --wait-for-port", () => {
+      const result = run("start -n keep-error --keep -- sleep 60");
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain("--keep requires --wait-for-port");
+    });
+  });
 });

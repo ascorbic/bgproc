@@ -1,7 +1,8 @@
 import path from "node:path";
 import { defineCommand } from "citty";
-import { readRegistry, isProcessRunning, getLogPaths } from "../registry.js";
-import { detectPorts, detectPortFromLogs } from "../ports.js";
+import { readRegistry, isProcessRunning } from "../registry.js";
+import { detectPorts } from "../ports.js";
+import { formatUptime } from "../utils.js";
 
 export const listCommand = defineCommand({
   meta: {
@@ -34,25 +35,19 @@ export const listCommand = defineCommand({
       })
       .map(([name, entry]) => {
         const running = isProcessRunning(entry.pid);
-        let ports: number[] = [];
-
-        if (running) {
-          ports = detectPorts(entry.pid);
-          if (ports.length === 0) {
-            const logPaths = getLogPaths(name);
-            const logPort = detectPortFromLogs(logPaths.stdout);
-            if (logPort) ports = [logPort];
-          }
-        }
+        const ports = running ? detectPorts(entry.pid) : [];
 
         return {
           name,
           pid: entry.pid,
           running,
+          ports,
           port: ports[0] ?? null,
           cwd: entry.cwd,
           command: entry.command.join(" "),
           startedAt: entry.startedAt,
+          uptime: running ? formatUptime(new Date(entry.startedAt)) : null,
+          ...(entry.killAt && { killAt: entry.killAt }),
         };
       });
 
