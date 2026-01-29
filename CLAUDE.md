@@ -25,10 +25,16 @@ This is a CLI tool that manages background processes, designed for agent use wit
 **Core modules**:
 - `src/registry.ts` - Process registry stored in `~/.local/share/bgproc/registry.json`. Tracks PIDs, commands, cwds, and timeouts.
 - `src/logs.ts` - Log file management with 1MB cap and automatic truncation
-- `src/ports.ts` - Port detection via `lsof` with fallback to log parsing
+- `src/ports.ts` - Port detection via `lsof`, walks descendant PIDs to find ports opened by child processes
+- `src/utils.ts` - Shared utilities (formatUptime)
 
 **Commands** (`src/commands/`): Each command is a citty `defineCommand()` that outputs JSON to stdout and errors to stderr.
 
 **Data storage**: `BGPROC_DATA_DIR` env var overrides default `~/.local/share/bgproc/`. Contains `registry.json` and `logs/` directory.
 
 **Process lifecycle**: Start spawns detached processes with stdout/stderr redirected to log files. Timeout kills are handled by spawning a separate Node process that survives CLI exit.
+
+**Key start flags**:
+- `--wait-for-port` / `-w` - Polls `detectPorts()` every 500ms, tails logs to stderr, prints JSON with port to stdout when detected
+- `--force` / `-f` - Kills existing process with same name before starting
+- `--keep` - With `--wait-for-port`, leaves process running on timeout instead of killing
