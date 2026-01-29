@@ -77,7 +77,7 @@ export function addProcess(name: string, entry: ProcessEntry): void {
   if (existing) {
     if (isProcessRunning(existing.pid)) {
       throw new Error(
-        `Process '${name}' is already running (PID ${existing.pid}). Use 'bgproc stop ${name}' first.`,
+        `Process '${name}' is already running (PID ${existing.pid}). Use --force to restart.`,
       );
     }
     // Dead process - auto-clean old logs before starting fresh
