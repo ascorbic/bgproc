@@ -50,7 +50,7 @@ export function detectPorts(pid: number): number[] {
         ports.push(parseInt(match[1], 10));
       }
     }
-    return [...new Set(ports)]; // dedupe
+    return [...new Set(ports)].sort((a, b) => a - b); // dedupe and sort ascending
   } catch {
     return [];
   }
