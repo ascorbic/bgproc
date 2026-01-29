@@ -23,6 +23,13 @@ bgproc start -n <name> -- <command...>
 bgproc start -n devserver -- npm run dev
 bgproc start -n devserver -t 300 -- npm run dev  # auto-kill after 5 min
 
+# Start and wait for port (recommended for dev servers)
+bgproc start -n devserver -w -- npm run dev      # wait for port, then exit
+bgproc start -n devserver -w 30 -- npm run dev   # wait up to 30s for port
+
+# Force restart (kill existing process first)
+bgproc start -n devserver -f -w -- npm run dev
+
 # Check status (returns JSON with pid, running state, port)
 bgproc status <name>
 
@@ -46,14 +53,18 @@ bgproc clean --all
 
 ## Workflow
 
-1. Start a process: `bgproc start -n devserver -- npm run dev`
-2. Check status and get port: `bgproc status devserver`
-3. If something's wrong, check logs: `bgproc logs devserver`
-4. When done: `bgproc stop devserver`
+1. Start a process and wait for port: `bgproc start -n devserver -w -- npm run dev`
+   - Streams logs to stderr while starting
+   - Prints JSON with port to stdout when ready
+   - Use `-f` to force restart if already running
+2. If something's wrong, check logs: `bgproc logs devserver`
+3. When done: `bgproc stop devserver`
 
 ## Notes
 
 - All commands output JSON to stdout, errors to stderr
-- Port detection works via `lsof` (macOS/Linux only)
+- Port detection works via `lsof` and checks child processes (macOS/Linux only)
+- Use `-w` to wait for port detection before returning
+- Use `-f` to force restart (kills existing process with same name)
 - Starting a process with the same name as a dead one auto-cleans it
 - Logs are capped at 1MB per process

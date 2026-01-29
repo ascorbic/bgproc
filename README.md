@@ -18,6 +18,13 @@ npx bgproc start -n myserver -- npm run dev
 # Start a process
 bgproc start -n myserver -- npm run dev
 
+# Start and wait for port to be detected (great for dev servers)
+bgproc start -n myserver -w -- npm run dev
+# Streams logs to stderr, prints JSON with port to stdout when ready
+
+# Force restart (kills existing process with same name)
+bgproc start -n myserver -f -w -- npm run dev
+
 # Check status (returns JSON with port detection)
 bgproc status myserver
 # {"name":"myserver","pid":12345,"running":true,"port":3000,...}
@@ -45,8 +52,10 @@ bgproc clean --all
 ## Features
 
 - **JSON output**: All commands output JSON to stdout, errors to stderr
-- **Port detection**: Automatically detects listening ports via `lsof`
-- **Duplicate prevention**: Prevent starting multiple processes with the same name
+- **Port detection**: Automatically detects listening ports via `lsof` (checks child processes too)
+- **Wait for port**: `--wait-for-port` blocks until port is detected, streaming logs
+- **Force restart**: `--force` kills existing process with same name before starting
+- **Duplicate prevention**: Prevents starting multiple processes with the same name
 - **Log management**: Stdout/stderr captured, capped at 1MB
 - **Timeout support**: `--timeout 60` kills after N seconds
 - **Auto-cleanup**: Starting a process with the same name as a dead one auto-cleans it
@@ -57,8 +66,11 @@ bgproc clean --all
 ### `start`
 
 ```
--n, --name     Process name (required)
--t, --timeout  Kill after N seconds
+-n, --name          Process name (required)
+-f, --force         Kill existing process with same name before starting
+-t, --timeout       Kill after N seconds
+-w, --wait-for-port Wait for port detection (optional: timeout in seconds)
+    --keep          Keep process running on wait timeout (default: kill)
 ```
 
 ### `status`, `stop`, `logs`, `clean`
