@@ -26,6 +26,7 @@ This is a CLI tool that manages background processes, designed for agent use wit
 - `src/registry.ts` - Process registry stored in `~/.local/share/bgproc/registry.json`. Tracks PIDs, commands, cwds, and timeouts.
 - `src/logs.ts` - Log file management with 1MB cap and automatic truncation
 - `src/ports.ts` - Port detection via `lsof`, walks descendant PIDs to find ports opened by child processes
+- `src/process.ts` - Shared process spawning, port waiting, and output logic (used by start and restart)
 - `src/utils.ts` - Shared utilities (formatUptime)
 
 **Commands** (`src/commands/`): Each command is a citty `defineCommand()` that outputs JSON to stdout and errors to stderr.

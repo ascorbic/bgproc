@@ -25,6 +25,10 @@ bgproc start -n myserver -w -- npm run dev
 # Force restart (kills existing process with same name)
 bgproc start -n myserver -f -w -- npm run dev
 
+# Restart with same command and cwd
+bgproc restart myserver
+bgproc restart myserver -w  # wait for port
+
 # Check status (returns JSON with port detection)
 bgproc status myserver
 # {"name":"myserver","pid":12345,"running":true,"port":3000,...}
@@ -54,6 +58,7 @@ bgproc clean --all
 - **JSON output**: All commands output JSON to stdout, errors to stderr
 - **Port detection**: Automatically detects listening ports via `lsof` (checks child processes too)
 - **Wait for port**: `--wait-for-port` blocks until port is detected, streaming logs
+- **Restart**: `restart` re-runs a process with the same command and cwd
 - **Force restart**: `--force` kills existing process with same name before starting
 - **Duplicate prevention**: Prevents starting multiple processes with the same name
 - **Log management**: Stdout/stderr captured, capped at 1MB
@@ -69,6 +74,13 @@ bgproc clean --all
 -n, --name          Process name (required)
 -f, --force         Kill existing process with same name before starting
 -t, --timeout       Kill after N seconds
+-w, --wait-for-port Wait for port detection (optional: timeout in seconds)
+    --keep          Keep process running on wait timeout (default: kill)
+```
+
+### `restart`
+
+```
 -w, --wait-for-port Wait for port detection (optional: timeout in seconds)
     --keep          Keep process running on wait timeout (default: kill)
 ```
@@ -145,8 +157,9 @@ Use `bgproc` to manage dev servers and background processes. All commands output
 Workflow:
 1. `bgproc start -n devserver -- npm run dev` - Start a process
 2. `bgproc status devserver` - Check if running, get port
-3. `bgproc logs devserver` - View output if something's wrong
-4. `bgproc stop devserver` - Stop when done
+3. `bgproc restart devserver` - Restart with same command
+4. `bgproc logs devserver` - View output if something's wrong
+5. `bgproc stop devserver` - Stop when done
 ```
 
 ## Platform Support
