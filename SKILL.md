@@ -11,6 +11,7 @@ A CLI for managing background processes. All commands output JSON to stdout.
 
 Use bgproc when you need to:
 - Start a dev server or other long-running process in the background
+- Restart a process with the same command and working directory
 - Check if a process is running and what port it's listening on
 - View logs from a background process
 - Stop a background process
@@ -29,6 +30,10 @@ bgproc start -n devserver -w 30 -- npm run dev   # wait up to 30s for port
 
 # Force restart (kill existing process first)
 bgproc start -n devserver -f -w -- npm run dev
+
+# Restart with same command and cwd (kills if running)
+bgproc restart <name>
+bgproc restart <name> -w      # wait for port after restart
 
 # Check status (returns JSON with pid, running state, port)
 bgproc status <name>
@@ -57,8 +62,11 @@ bgproc clean --all
    - Streams logs to stderr while starting
    - Prints JSON with port to stdout when ready
    - Use `-f` to force restart if already running
-2. If something's wrong, check logs: `bgproc logs devserver`
-3. When done: `bgproc stop devserver`
+2. Restart a process: `bgproc restart devserver -w`
+   - Re-runs with the same command and cwd
+   - Kills the process first if still running
+3. If something's wrong, check logs: `bgproc logs devserver`
+4. When done: `bgproc stop devserver`
 
 ## Notes
 
