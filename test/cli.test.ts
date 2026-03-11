@@ -322,6 +322,57 @@ describe("bgproc CLI", () => {
     });
   });
 
+  describe("restart", () => {
+    it("restarts a running process with new PID", () => {
+      const first = run("start -n restart-test -- sleep 60");
+      expect(first.status).toBe(0);
+      const firstPid = parseJson(first.stdout).pid;
+
+      const result = run("restart restart-test");
+      expect(result.status).toBe(0);
+
+      const data = parseJson(result.stdout);
+      expect(data.name).toBe("restart-test");
+      expect(data.restarted).toBe(true);
+      expect(data.pid).not.toBe(firstPid);
+      expect(data.command).toBe("sleep 60");
+
+      // Verify new process is running
+      const status = run("status restart-test");
+      expect(parseJson(status.stdout).running).toBe(true);
+      expect(parseJson(status.stdout).pid).toBe(data.pid);
+    });
+
+    it("restarts a dead process", async () => {
+      run("start -n restart-dead -- sleep 0.1");
+      await new Promise((r) => setTimeout(r, 300));
+
+      const result = run("restart restart-dead");
+      expect(result.status).toBe(0);
+
+      const data = parseJson(result.stdout);
+      expect(data.restarted).toBe(true);
+    });
+
+    it("fails for unknown process", () => {
+      const result = run("restart nonexistent");
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain("not found");
+    });
+
+    it("supports --wait-for-port", () => {
+      run("start -n restart-port -- python3 -m http.server 19878");
+      execSync("sleep 0.5");
+
+      const result = run("restart restart-port -w");
+      expect(result.status).toBe(0);
+
+      const data = parseJson(result.stdout);
+      expect(data.restarted).toBe(true);
+      expect(data.port).toBe(19878);
+    });
+  });
+
   describe("force", () => {
     it("kills existing process with --force", () => {
       const first = run("start -n force-test -- sleep 60");

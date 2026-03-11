@@ -5,6 +5,7 @@ import { logsCommand } from "./commands/logs.js";
 import { stopCommand } from "./commands/stop.js";
 import { listCommand } from "./commands/list.js";
 import { cleanCommand } from "./commands/clean.js";
+import { restartCommand } from "./commands/restart.js";
 
 const main = defineCommand({
   meta: {
@@ -18,6 +19,7 @@ const main = defineCommand({
     logs: logsCommand,
     stop: stopCommand,
     list: listCommand,
+    restart: restartCommand,
     clean: cleanCommand,
   },
 });
