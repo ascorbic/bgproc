@@ -1,5 +1,15 @@
 # bgproc
 
+## 0.3.0
+
+### Minor Changes
+
+- [#8](https://github.com/ascorbic/bgproc/pull/8) [`8e24687`](https://github.com/ascorbic/bgproc/commit/8e2468796829e522ea596b48e948291e2edaa981) Thanks [@ascorbic](https://github.com/ascorbic)! - Add `restart` command to restart a process with the same command and cwd. Supports `-w` to wait for port detection.
+
+### Patch Changes
+
+- [#5](https://github.com/ascorbic/bgproc/pull/5) [`5219248`](https://github.com/ascorbic/bgproc/commit/5219248518119496421bcebc8710dfee0d9a2576) Thanks [@ascorbic](https://github.com/ascorbic)! - Sort detected ports numerically so the `port` field returns the lowest port number
+
 ## 0.2.0
 
 ### Minor Changes
